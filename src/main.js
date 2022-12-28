@@ -6,7 +6,10 @@ const ctx = canvas.getContext('2d');
 
 const road = new Road(canvas.width / 2, canvas.width * 0.9);
 const car = new Car(road.getLaneCenter(1), 100, 30, 50, 'ADMIN');
-const traffic = [new Car(road.getLaneCenter(1), -100, 30, 50, 'DUMMY', 1.5)];
+const traffic = [
+  new Car(road.getLaneCenter(1), -100, 30, 50, 'DUMMY', 1.5),
+  new Car(road.getLaneCenter(3), -100, 30, 50, 'DUMMY', 1.5),
+];
 animate();
 
 function animate() {
