@@ -1,26 +1,27 @@
 class Car {
-  constructor(x, y, width, height, controlType, maxSpeed = 2) {
+  constructor(x, y, width, height, controlType, maxSpeed = 3) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
 
     this.speed = 0;
-    this.acceleration = 0.1;
+    this.acceleration = 0.2;
     this.maxSpeed = maxSpeed;
     this.friction = 0.05;
     this.angle = 0;
+
     this.damaged = false;
 
     this.useBrain = controlType == 'AI';
 
     if (controlType != 'DUMMY') {
-      this.sensor = new Sensor(this);
-      this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4]);
+      this.sensor = new Sensor();
+      this.brain = new NeuralNetwork([this.sensor.rayCount, 4]);
     }
-
     this.controls = new Controls(controlType);
   }
+
   update(roadBorders, traffic) {
     if (!this.damaged) {
       this.#move();
@@ -28,12 +29,11 @@ class Car {
       this.damaged = this.#assessDamage(roadBorders, traffic);
     }
     if (this.sensor) {
-      this.sensor.update(roadBorders, traffic);
+      this.sensor.update(this.x, this.y, this.angle, roadBorders, traffic);
       const offsets = this.sensor.readings.map((s) =>
         s == null ? 0 : 1 - s.offset
       );
       const outputs = NeuralNetwork.feedForward(offsets, this.brain);
-
       if (this.useBrain) {
         this.controls.forward = outputs[0];
         this.controls.left = outputs[1];
@@ -45,16 +45,21 @@ class Car {
 
   #assessDamage(roadBorders, traffic) {
     for (let i = 0; i < roadBorders.length; i++) {
-      if (polysIntersect(this.polygon, roadBorders[i])) {
+      if (polysIntersect([...this.polygon, this.polygon[0]], roadBorders[i])) {
         return true;
       }
     }
     for (let i = 0; i < traffic.length; i++) {
-      if (polysIntersect(this.polygon, traffic[i].polygon)) {
+      const poly = traffic[i].polygon;
+      if (
+        polysIntersect([...this.polygon, this.polygon[0]], [...poly, poly[0]])
+      ) {
         return true;
       }
     }
+    return false;
   }
+
   #createPolygon() {
     const points = [];
     const rad = Math.hypot(this.width, this.height) / 2;
@@ -86,6 +91,16 @@ class Car {
       this.speed -= this.acceleration;
     }
 
+    if (this.speed != 0) {
+      const flip = this.speed > 0 ? 1 : -1;
+      if (this.controls.left) {
+        this.angle += 0.03 * flip;
+      }
+      if (this.controls.right) {
+        this.angle -= 0.03 * flip;
+      }
+    }
+
     if (this.speed > this.maxSpeed) {
       this.speed = this.maxSpeed;
     }
@@ -100,28 +115,18 @@ class Car {
       this.speed += this.friction;
     }
     if (Math.abs(this.speed) < this.friction) {
-      // without this it will keep propelling the car forward
       this.speed = 0;
     }
-    if (this.speed != 0) {
-      const flip = this.speed > 0 ? 1 : -1;
-      if (this.controls.left) {
-        this.angle += 0.01 * flip;
-      }
-      if (this.controls.right) {
-        this.angle -= 0.01 * flip;
-      }
-    }
 
-    this.x -= Math.sin(this.angle) * this.speed; // calculate the vector based on the unit circle
-    this.y -= Math.cos(this.angle) * this.speed; // sin for x ,cos for y
+    this.x -= Math.sin(this.angle) * this.speed;
+    this.y -= Math.cos(this.angle) * this.speed;
   }
 
   draw(ctx, drawSensor = false) {
     if (this.damaged) {
-      ctx.fillStyle = 'red';
+      ctx.fillStyle = 'gray';
     } else {
-      ctx.fillStyle = 'white';
+      ctx.fillStyle = 'black';
     }
     ctx.beginPath();
     ctx.moveTo(this.polygon[0].x, this.polygon[0].y);

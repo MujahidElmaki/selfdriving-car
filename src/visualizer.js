@@ -1,4 +1,4 @@
-class Visualizer {
+﻿class Visualizer {
   static drawNetwork(ctx, network) {
     const margin = 50;
     const left = margin;
@@ -17,7 +17,6 @@ class Visualizer {
           network.levels.length == 1 ? 0.5 : i / (network.levels.length - 1)
         );
 
-      ctx.setLineDash([7, 3]);
       Visualizer.drawLevel(
         ctx,
         network.levels[i],
@@ -35,6 +34,7 @@ class Visualizer {
     const bottom = top + height;
 
     const { inputs, outputs, weights, biases } = level;
+    const nodeRadius = 14;
 
     for (let i = 0; i < inputs.length; i++) {
       for (let j = 0; j < outputs.length; j++) {
@@ -46,8 +46,6 @@ class Visualizer {
         ctx.stroke();
       }
     }
-
-    const nodeRadius = 18;
     for (let i = 0; i < inputs.length; i++) {
       const x = Visualizer.#getNodeX(inputs, i, left, right);
       ctx.beginPath();
@@ -59,7 +57,6 @@ class Visualizer {
       ctx.fillStyle = getRGBA(inputs[i]);
       ctx.fill();
     }
-
     for (let i = 0; i < outputs.length; i++) {
       const x = Visualizer.#getNodeX(outputs, i, left, right);
       ctx.beginPath();
@@ -70,15 +67,11 @@ class Visualizer {
       ctx.arc(x, top, nodeRadius * 0.6, 0, Math.PI * 2);
       ctx.fillStyle = getRGBA(outputs[i]);
       ctx.fill();
-
       ctx.beginPath();
       ctx.lineWidth = 2;
       ctx.arc(x, top, nodeRadius * 0.8, 0, Math.PI * 2);
       ctx.strokeStyle = getRGBA(biases[i]);
-      ctx.setLineDash([3, 3]);
       ctx.stroke();
-      ctx.setLineDash([]);
-
       if (outputLabels[i]) {
         ctx.beginPath();
         ctx.textAlign = 'center';
@@ -100,12 +93,4 @@ class Visualizer {
       nodes.length == 1 ? 0.5 : index / (nodes.length - 1)
     );
   }
-}
-
-function getRGBA(value) {
-  const alpha = Math.abs(value);
-  const R = value < 0 ? 0 : 255;
-  const G = R;
-  const B = value > 0 ? 0 : 255;
-  return 'rgba(' + R + ',' + G + ',' + B + ',' + alpha + ')';
 }

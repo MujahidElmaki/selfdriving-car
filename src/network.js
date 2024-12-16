@@ -59,9 +59,7 @@ class Level {
   }
 
   static feedForward(givenInputs, level) {
-    for (let i = 0; i < level.inputs.length; i++) {
-      level.inputs[i] = givenInputs[i];
-    }
+    level.inputs = [...givenInputs];
 
     for (let i = 0; i < level.outputs.length; i++) {
       let sum = 0;
